@@ -23,15 +23,21 @@ public class TestController {
     return "User Content.";
   }
 
-  @GetMapping("/mod")
-  @PreAuthorize("hasRole('MODERATOR')")
-  public String moderatorAccess() {
-    return "Moderator Board.";
+  @GetMapping("/contributor")
+  @PreAuthorize("hasRole('CONTRIBUTOR')")
+  public String contributorAccess() {
+    return "Contributor Content.";
   }
 
-  @GetMapping("/admin")
-  @PreAuthorize("hasRole('ADMIN')")
-  public String adminAccess() {
-    return "Admin Board.";
+  @GetMapping("/patient")
+  @PreAuthorize("hasRole('PATIENT')")
+  public String patientAccess() {
+    return "Patient Content.";
+  }
+
+  @GetMapping("/doctor")
+  @PreAuthorize("hasRole('DOCTOR')")
+  public String doctorAccess() {
+    return "Doctor Content.";
   }
 }
