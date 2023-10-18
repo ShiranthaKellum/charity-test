@@ -20,19 +20,19 @@ public class PatientController {
             Patient patient1 = patientRepository.save(new Patient(
                     patient.getId(),
                     patient.getName(),
-//                    patient.getAge(),
+                    patient.getAge(),
                     patient.getGender(),
-//                    patient.getCountry(),
-//                    patient.getHeight(),
-//                    patient.getWeight(),
-//                    patient.getHeartRate(),
-//                    patient.getBloodPressure(),
-//                    patient.getSugarLevel(),
-                    patient.getAllergies()
-//                    patient.getSymptoms(),
-//                    patient.getDiseases(),
-//                    patient.getTreatments(),
-//                    patient.getMedicines()
+                    patient.getCountry(),
+                    patient.getHeight(),
+                    patient.getWeight(),
+                    patient.getHeartRate(),
+                    patient.getBloodPressure(),
+                    patient.getSugarLevel(),
+                    patient.getAllergies(),
+                    patient.getSymptoms(),
+                    patient.getDiseases(),
+                    patient.getTreatments(),
+                    patient.getMedicines()
             ));
             return  new ResponseEntity<>(patient1, HttpStatus.CREATED);
         } catch (Exception e) {
