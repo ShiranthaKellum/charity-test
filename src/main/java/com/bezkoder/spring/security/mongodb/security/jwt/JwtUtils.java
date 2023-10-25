@@ -2,6 +2,9 @@ package com.bezkoder.spring.security.mongodb.security.jwt;
 
 import java.security.Key;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.function.Function;
 
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
@@ -10,10 +13,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseCookie;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 import org.springframework.web.util.WebUtils;
 
-import com.bezkoder.spring.security.mongodb.security.jwt.JwtUtils;
 import com.bezkoder.spring.security.mongodb.security.services.UserDetailsImpl;
 
 import io.jsonwebtoken.*;
@@ -42,10 +45,20 @@ public class JwtUtils {
     }
   }
 
-  public ResponseCookie generateJwtCookie(UserDetailsImpl userPrincipal) {
+  public String generateJwtCookie(UserDetailsImpl userPrincipal) {
     String jwt = generateTokenFromUsername(userPrincipal.getUsername());
-    ResponseCookie cookie = ResponseCookie.from(jwtCookie, jwt).path("/api").maxAge(24 * 60 * 60).httpOnly(true).build();
-    return cookie;
+    String username = userPrincipal.getUsername();
+    Map<String,Object> claims=new HashMap<>();
+    return createToken(claims,username);
+  }
+
+  private String createToken(Map<String, Object> claims, String username) {
+    return Jwts.builder()
+            .setClaims(claims)
+            .setSubject(username)
+            .setIssuedAt(new Date(System.currentTimeMillis()))
+            .setExpiration(new Date(System.currentTimeMillis()+1000*60*30))
+            .signWith(getSignKey(), SignatureAlgorithm.HS256).compact();
   }
 
   public ResponseCookie getCleanJwtCookie() {
@@ -86,5 +99,41 @@ public class JwtUtils {
               .setExpiration(new Date((new Date()).getTime() + jwtExpirationMs))
               .signWith(key(), SignatureAlgorithm.HS256)
               .compact();
+  }
+
+  public String extractUsername(String token) {
+    return extractClaim(token, Claims::getSubject);
+  }
+
+  private <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
+    final Claims claims = extractAllClaims(token);
+    return claimsResolver.apply(claims);
+  }
+
+  private Claims extractAllClaims(String token) {
+    return Jwts
+            .parserBuilder()
+            .setSigningKey(getSignKey())
+            .build()
+            .parseClaimsJws(token)
+            .getBody();
+  }
+
+  private Key getSignKey() {
+    byte[] keyBytes= Decoders.BASE64.decode(jwtSecret);
+    return Keys.hmacShaKeyFor(keyBytes);
+  }
+
+  public boolean validateToken(String token, UserDetails userDetails) {
+    final String username = extractUsername(token);
+    return (username.equals(userDetails.getUsername()) && !isTokenExpired(token));
+  }
+
+  private boolean isTokenExpired(String token) {
+    return extractExpiration(token).before(new Date());
+  }
+
+  private Date extractExpiration(String token) {
+    return extractClaim(token, Claims::getExpiration);
   }
 }

@@ -7,7 +7,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-@CrossOrigin("http://localhost:4200")
+@CrossOrigin(allowedHeaders = "*", origins = "*", maxAge = 3600)
 @RestController
 @RequestMapping("/patient")
 public class PatientController {
