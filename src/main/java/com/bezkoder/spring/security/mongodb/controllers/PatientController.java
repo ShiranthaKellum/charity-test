@@ -7,6 +7,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @CrossOrigin(allowedHeaders = "*", origins = "*", maxAge = 3600)
 @RestController
 @RequestMapping("/patient")
@@ -38,5 +40,10 @@ public class PatientController {
         } catch (Exception e) {
             return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
         }
+    }
+
+    @GetMapping("/get-all-patients")
+    public List<Patient> getAllPatients() {
+        return patientRepository.findAll();
     }
 }
