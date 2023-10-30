@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Optional;
 
 @CrossOrigin(allowedHeaders = "*", origins = "*", maxAge = 3600)
 @RestController
@@ -34,7 +35,9 @@ public class PatientController {
                     patient.getSymptoms(),
                     patient.getDiseases(),
                     patient.getTreatments(),
-                    patient.getMedicines()
+                    patient.getMedicines(),
+                    patient.getHistory(),
+                    patient.getObservations()
             ));
             return  new ResponseEntity<>(patient1, HttpStatus.CREATED);
         } catch (Exception e) {
@@ -45,5 +48,10 @@ public class PatientController {
     @GetMapping("/get-all-patients")
     public List<Patient> getAllPatients() {
         return patientRepository.findAll();
+    }
+
+    @GetMapping("/get-patient/{id}")
+    public Optional<Patient> getPatient(@PathVariable String id) {
+        return patientRepository.findById(id);
     }
 }

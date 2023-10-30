@@ -29,4 +29,6 @@ public class Patient {
     private String diseases;
     private String treatments;
     private String medicines;
+    private String history;
+    private String observations;
 }
