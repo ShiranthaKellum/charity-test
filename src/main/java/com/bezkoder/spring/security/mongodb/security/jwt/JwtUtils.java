@@ -57,13 +57,12 @@ public class JwtUtils {
             .setClaims(claims)
             .setSubject(username)
             .setIssuedAt(new Date(System.currentTimeMillis()))
-            .setExpiration(new Date(System.currentTimeMillis()+1000*60*30*2*24))
+            .setExpiration(new Date(System.currentTimeMillis()+1000*60*30*2*6))
             .signWith(getSignKey(), SignatureAlgorithm.HS256).compact();
   }
 
   public ResponseCookie getCleanJwtCookie() {
-    ResponseCookie cookie = ResponseCookie.from(jwtCookie, null).path("/api").build();
-    return cookie;
+    return ResponseCookie.from(jwtCookie, null).path("/api").build();
   }
 
   public String getUserNameFromJwtToken(String token) {
