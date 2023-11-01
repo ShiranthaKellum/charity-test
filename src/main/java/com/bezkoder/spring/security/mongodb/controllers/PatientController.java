@@ -54,4 +54,65 @@ public class PatientController {
     public Optional<Patient> getPatient(@PathVariable String id) {
         return patientRepository.findById(id);
     }
+
+    @PutMapping("/update/{id}")
+    public ResponseEntity<Patient> updatePatient(@PathVariable String id, @RequestBody Patient updatedPatient) {
+        Patient existingPatient = patientRepository.findById(id)
+                .orElse(null);
+
+        if (existingPatient != null) {
+            if (updatedPatient.getName() != null) {
+                existingPatient.setName(updatedPatient.getName());
+            }
+            if (updatedPatient.getAge() != null) {
+                existingPatient.setAge(updatedPatient.getAge());
+            }
+            if (updatedPatient.getGender() != null) {
+                existingPatient.setGender(updatedPatient.getGender());
+            }
+            if (updatedPatient.getCountry() != null) {
+                existingPatient.setCountry(updatedPatient.getCountry());
+            }
+            if (updatedPatient.getHeight() != null) {
+                existingPatient.setHeight(updatedPatient.getHeight());
+            }
+            if (updatedPatient.getWeight() != null) {
+                existingPatient.setWeight(updatedPatient.getWeight());
+            }
+            if (updatedPatient.getHeartRate() != null) {
+                existingPatient.setHeartRate(updatedPatient.getHeartRate());
+            }
+            if (updatedPatient.getBloodPressure() != null) {
+                existingPatient.setBloodPressure(updatedPatient.getBloodPressure());
+            }
+            if (updatedPatient.getSugarLevel() != null) {
+                existingPatient.setSugarLevel(updatedPatient.getSugarLevel());
+            }
+            if (updatedPatient.getAllergies() != null) {
+                existingPatient.setAllergies(updatedPatient.getAllergies());
+            }
+            if (updatedPatient.getSymptoms() != null) {
+                existingPatient.setSymptoms(updatedPatient.getSymptoms());
+            }
+            if (updatedPatient.getDiseases() != null) {
+                existingPatient.setDiseases(updatedPatient.getDiseases());
+            }
+            if (updatedPatient.getTreatments() != null) {
+                existingPatient.setTreatments(updatedPatient.getTreatments());
+            }
+            if (updatedPatient.getMedicines() != null) {
+                existingPatient.setMedicines(updatedPatient.getMedicines());
+            }
+            if (updatedPatient.getHistory() != null) {
+                existingPatient.setHistory(updatedPatient.getHistory());
+            }
+            if (updatedPatient.getObservations() != null) {
+                existingPatient.setObservations(updatedPatient.getObservations());
+            }
+
+            return new ResponseEntity<>(patientRepository.save(existingPatient), HttpStatus.OK);
+        } else {
+            return ResponseEntity.notFound().build();
+        }
+    }
 }
