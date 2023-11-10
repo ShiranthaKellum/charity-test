@@ -36,7 +36,7 @@ import com.bezkoder.spring.security.mongodb.security.services.UserDetailsImpl;
 
 //for Angular Client (withCredentials)
 //@CrossOrigin(origins = "http://localhost:8081", maxAge = 3600, allowCredentials="true")
-@CrossOrigin(origins = "*", maxAge = 3600)
+@CrossOrigin(origins = "*", maxAge = 3600)//
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
