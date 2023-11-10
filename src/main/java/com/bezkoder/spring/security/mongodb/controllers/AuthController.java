@@ -103,26 +103,31 @@ public class AuthController {
     Set<Role> roles = new HashSet<>();
 
     if (strRoles == null) {
-      Role userRole = roleRepository.findByName(ERole.ROLE_DOCTOR)
+      Role userRole = roleRepository.findByName(ERole.ROLE_USER)
           .orElseThrow(() -> new RuntimeException("Error: Role is not found!"));
       roles.add(userRole);
     } else {
       strRoles.forEach(role -> {
         switch (role) {
-          case "doctor" -> {
-            Role adminRole = roleRepository.findByName(ERole.ROLE_DOCTOR)
+          case "admin" -> {
+            Role adminRole = roleRepository.findByName(ERole.ROLE_ADMIN)
                     .orElseThrow(() -> new RuntimeException("Error: Role is not found!"));
             roles.add(adminRole);
           }
+          case "doctor" -> {
+            Role doctorRole = roleRepository.findByName(ERole.ROLE_DOCTOR)
+                    .orElseThrow(() -> new RuntimeException("Error: Role is not found!"));
+            roles.add(doctorRole);
+          }
           case "patient" -> {
-            Role modRole = roleRepository.findByName(ERole.ROLE_PATIENT)
+            Role patientRole = roleRepository.findByName(ERole.ROLE_PATIENT)
                     .orElseThrow(() -> new RuntimeException("Error: Role is not found."));
-            roles.add(modRole);
+            roles.add(patientRole);
           }
           case "contributor" -> {
-            Role modRole = roleRepository.findByName(ERole.ROLE_CONTRIBUTOR)
+            Role contributorRole = roleRepository.findByName(ERole.ROLE_CONTRIBUTOR)
                     .orElseThrow(() -> new RuntimeException("Error: Role is not found."));
-            roles.add(modRole);
+            roles.add(contributorRole);
           }
           default -> {
             Role userRole = roleRepository.findByName(ERole.ROLE_USER)
