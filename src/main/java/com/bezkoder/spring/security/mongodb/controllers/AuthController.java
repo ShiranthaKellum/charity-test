@@ -3,9 +3,11 @@ package com.bezkoder.spring.security.mongodb.controllers;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import com.bezkoder.spring.security.mongodb.payload.request.UpdateUserRolesRequest;
 import com.bezkoder.spring.security.mongodb.service.UserService;
 import jakarta.validation.Valid;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -35,6 +37,7 @@ import com.bezkoder.spring.security.mongodb.security.services.UserDetailsImpl;
 @CrossOrigin(origins = "*", maxAge = 3600)
 @RestController
 @RequestMapping("/api/auth")
+@Slf4j
 public class AuthController {
   @Autowired
   AuthenticationManager authenticationManager;
@@ -144,11 +147,12 @@ public class AuthController {
   }
 
   @PutMapping("/user/{userId}/update-roles")
-  public ResponseEntity<?> updateRoles(@PathVariable String userId, @Valid @RequestBody SignupRequest updatedUserRequest) {
-    if (!userRepository.existsByUsername(updatedUserRequest.getUsername())) {
-      return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+  public ResponseEntity<?> updateRoles(@PathVariable String userId, @Valid @RequestBody UpdateUserRolesRequest updatedUserRolesRequest) {
+    if (!userRepository.existsByUsername(updatedUserRolesRequest.getUsername())) {
+      log.error("User {} is not found", updatedUserRolesRequest.getUsername());
+      return new ResponseEntity<>("User is not found!", HttpStatus.NOT_FOUND);
     }
-    User updatedUser = userService.updateUserRoles(userId, updatedUserRequest);
+    User updatedUser = userService.updateUserRoles(userId, updatedUserRolesRequest);
     return new ResponseEntity<>(updatedUser, HttpStatus.OK);
   }
 }
