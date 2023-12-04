@@ -1,14 +1,16 @@
 package com.bezkoder.spring.security.mongodb.controllers;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
+import com.bezkoder.spring.security.mongodb.payload.request.UpdateUserRolesRequest;
+import com.bezkoder.spring.security.mongodb.service.UserService;
 import jakarta.validation.Valid;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -16,11 +18,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import com.bezkoder.spring.security.mongodb.models.ERole;
 import com.bezkoder.spring.security.mongodb.models.Role;
@@ -39,6 +37,7 @@ import com.bezkoder.spring.security.mongodb.security.services.UserDetailsImpl;
 @CrossOrigin(origins = "*", maxAge = 3600)
 @RestController
 @RequestMapping("/api/auth")
+@Slf4j
 public class AuthController {
   @Autowired
   AuthenticationManager authenticationManager;
@@ -54,6 +53,9 @@ public class AuthController {
 
   @Autowired
   JwtUtils jwtUtils;
+
+  @Autowired
+  UserService userService;
 
   @PostMapping("/sign-in")
   public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginRequest loginRequest) {
@@ -142,5 +144,15 @@ public class AuthController {
     userRepository.save(user);
 
     return ResponseEntity.ok(new MessageResponse("User registered successfully!"));
+  }
+
+  @PutMapping("/user/{userId}/update-roles")
+  public ResponseEntity<?> updateRoles(@PathVariable String userId, @Valid @RequestBody UpdateUserRolesRequest updatedUserRolesRequest) {
+    if (!userRepository.existsByUsername(updatedUserRolesRequest.getUsername())) {
+      log.error("User {} is not found", updatedUserRolesRequest.getUsername());
+      return new ResponseEntity<>("User is not found!", HttpStatus.NOT_FOUND);
+    }
+    User updatedUser = userService.updateUserRoles(userId, updatedUserRolesRequest);
+    return new ResponseEntity<>(updatedUser, HttpStatus.OK);
   }
 }
