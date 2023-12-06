@@ -9,6 +9,7 @@ import com.bezkoder.spring.security.mongodb.repository.RoleRepository;
 import com.bezkoder.spring.security.mongodb.repository.UserRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.HashSet;
@@ -22,6 +23,36 @@ public class UserService {
 
     @Autowired
     RoleRepository roleRepository;
+
+    @Autowired
+    PasswordEncoder encoder;
+
+    public User signUpUser(SignupRequest signupRequest) {
+        User newUser = new User(
+                signupRequest.getUsername(),
+                signupRequest.getEmail(),
+                encoder.encode(signupRequest.getPassword())
+        );
+        log.info("New user {} created", signupRequest.getUsername());
+        Set<String> strRoles = signupRequest.getRoles();
+        Set<Role> roles = new HashSet<>();
+        if (strRoles == null) {
+            Role userRole = roleRepository.findByName(ERole.ROLE_USER)
+                    .orElseThrow(() -> new RuntimeException("Error: Role is not found!"));
+            roles.add(userRole);
+            log.info("Role `{}` is added to username {}", ERole.ROLE_USER, signupRequest.getUsername());
+        } else {
+            log.error("User should initially have only role `{}`", ERole.ROLE_USER);
+            return null;
+        }
+        newUser.setRoles(roles);
+        log.info("User has {} roles", roles);
+        newUser.setRequestedRoles(signupRequest.getRequestedRoles());
+        log.info("User has requested {} roles", signupRequest.getRequestedRoles());
+        userRepository.save(newUser);
+        log.info("New user is created");
+        return newUser;
+    }
 
     public User updateUserRoles(String id, UpdateUserRolesRequest updatedUserRolesRequest) {
         User existingUser = userRepository.findById(id)
@@ -61,6 +92,7 @@ public class UserService {
                 );
             }
             existingUser.setRoles(roles);
+            existingUser.setRequestedRoles(null);
             userRepository.save(existingUser);
             log.info("User is updated");
         }
