@@ -5,6 +5,7 @@ import com.bezkoder.spring.security.mongodb.models.Role;
 import com.bezkoder.spring.security.mongodb.models.User;
 import com.bezkoder.spring.security.mongodb.payload.request.SignupRequest;
 import com.bezkoder.spring.security.mongodb.payload.request.UpdateUserRolesRequest;
+import com.bezkoder.spring.security.mongodb.payload.response.RoleRequestedUser;
 import com.bezkoder.spring.security.mongodb.repository.RoleRepository;
 import com.bezkoder.spring.security.mongodb.repository.UserRepository;
 import lombok.extern.slf4j.Slf4j;
@@ -12,7 +13,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 @Service
@@ -47,8 +50,14 @@ public class UserService {
         }
         newUser.setRoles(roles);
         log.info("User has {} roles", roles);
-        newUser.setRequestedRoles(signupRequest.getRequestedRoles());
-        log.info("User has requested {} roles", signupRequest.getRequestedRoles());
+        Set<String> requestedRolesSet = signupRequest.getRequestedRoles();
+        if (requestedRolesSet.isEmpty()) {
+            newUser.setRequestedRoles(null);
+            log.info("New User has not requested any role");
+        } else {
+            newUser.setRequestedRoles(signupRequest.getRequestedRoles());
+            log.info("User has requested {} roles", signupRequest.getRequestedRoles());
+        }
         userRepository.save(newUser);
         log.info("New user is created");
         return newUser;
@@ -97,5 +106,20 @@ public class UserService {
             log.info("User is updated");
         }
         return existingUser;
+    }
+
+    public List<RoleRequestedUser> getRoleRequestedUsers() {
+        List<User> roleRequestedUsersWithAllDetails = userRepository.findByRequestedRolesNotNull();
+        List<RoleRequestedUser> roleRequestedUsersWithTrimmedDetails = new ArrayList<>();
+        roleRequestedUsersWithAllDetails.forEach(user -> {
+            RoleRequestedUser roleRequestedUserWithTrimmedDetails = new RoleRequestedUser(
+                    user.getId(),
+                    user.getUsername(),
+                    user.getRequestedRoles()
+            );
+            roleRequestedUsersWithTrimmedDetails.add(roleRequestedUserWithTrimmedDetails);
+        });
+        log.info("{} role requested users were found", roleRequestedUsersWithTrimmedDetails.size());
+        return roleRequestedUsersWithTrimmedDetails;
     }
 }
