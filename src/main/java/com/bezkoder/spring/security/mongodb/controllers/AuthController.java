@@ -4,6 +4,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import com.bezkoder.spring.security.mongodb.payload.request.UpdateUserRolesRequest;
+import com.bezkoder.spring.security.mongodb.payload.response.RoleRequestedUser;
 import com.bezkoder.spring.security.mongodb.service.UserService;
 import jakarta.validation.Valid;
 
@@ -106,5 +107,10 @@ public class AuthController {
     }
     User updatedUser = userService.updateUserRoles(userId, updatedUserRolesRequest);
     return new ResponseEntity<>(updatedUser, HttpStatus.OK);
+  }
+
+  @GetMapping("/role-requested-users")
+  public List<RoleRequestedUser> getRoleRequestedUsers() {
+    return userService.getRoleRequestedUsers();
   }
 }
