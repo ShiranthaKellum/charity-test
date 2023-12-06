@@ -89,61 +89,13 @@ public class AuthController {
           .badRequest()
           .body(new MessageResponse("Error: Username is already taken!"));
     }
-
     if (userRepository.existsByEmail(signUpRequest.getEmail())) {
       return ResponseEntity
           .badRequest()
           .body(new MessageResponse("Error: Email is already in use!"));
     }
-
-    // Create new user's account
-    User user = new User(signUpRequest.getUsername(), 
-                         signUpRequest.getEmail(),
-                         encoder.encode(signUpRequest.getPassword()));
-
-    Set<String> strRoles = signUpRequest.getRoles();
-    Set<Role> roles = new HashSet<>();
-
-    if (strRoles == null) {
-      Role userRole = roleRepository.findByName(ERole.ROLE_USER)
-          .orElseThrow(() -> new RuntimeException("Error: Role is not found!"));
-      roles.add(userRole);
-    } else {
-      strRoles.forEach(role -> {
-        switch (role) {
-          case "admin" -> {
-            Role adminRole = roleRepository.findByName(ERole.ROLE_ADMIN)
-                    .orElseThrow(() -> new RuntimeException("Error: Role is not found!"));
-            roles.add(adminRole);
-          }
-          case "doctor" -> {
-            Role doctorRole = roleRepository.findByName(ERole.ROLE_DOCTOR)
-                    .orElseThrow(() -> new RuntimeException("Error: Role is not found!"));
-            roles.add(doctorRole);
-          }
-          case "patient" -> {
-            Role patientRole = roleRepository.findByName(ERole.ROLE_PATIENT)
-                    .orElseThrow(() -> new RuntimeException("Error: Role is not found."));
-            roles.add(patientRole);
-          }
-          case "contributor" -> {
-            Role contributorRole = roleRepository.findByName(ERole.ROLE_CONTRIBUTOR)
-                    .orElseThrow(() -> new RuntimeException("Error: Role is not found."));
-            roles.add(contributorRole);
-          }
-          default -> {
-            Role userRole = roleRepository.findByName(ERole.ROLE_USER)
-                    .orElseThrow(() -> new RuntimeException("Error: Role is not found."));
-            roles.add(userRole);
-          }
-        }
-      });
-    }
-
-    user.setRoles(roles);
-    userRepository.save(user);
-
-    return ResponseEntity.ok(new MessageResponse("User registered successfully!"));
+    User newUser = userService.signUpUser(signUpRequest);
+    return new  ResponseEntity<>(newUser, HttpStatus.OK);
   }
 
   @PutMapping("/user/{userId}/update-roles")
