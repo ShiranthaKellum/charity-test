@@ -1,37 +1,38 @@
 package com.bezkoder.spring.security.mongodb.controllers;
 
-import java.util.*;
-import java.util.stream.Collectors;
-
-import com.bezkoder.spring.security.mongodb.payload.request.UpdateUserRolesRequest;
-import com.bezkoder.spring.security.mongodb.payload.response.RoleRequestedUser;
-import com.bezkoder.spring.security.mongodb.service.UserService;
-import jakarta.validation.Valid;
-
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseCookie;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.web.bind.annotation.*;
-
-import com.bezkoder.spring.security.mongodb.models.ERole;
-import com.bezkoder.spring.security.mongodb.models.Role;
+import com.bezkoder.spring.security.mongodb.models.RefreshToken;
 import com.bezkoder.spring.security.mongodb.models.User;
 import com.bezkoder.spring.security.mongodb.payload.request.LoginRequest;
 import com.bezkoder.spring.security.mongodb.payload.request.SignupRequest;
-import com.bezkoder.spring.security.mongodb.payload.response.UserInfoResponse;
+import com.bezkoder.spring.security.mongodb.payload.request.TokenRefreshRequest;
+import com.bezkoder.spring.security.mongodb.payload.request.UpdateUserRolesRequest;
 import com.bezkoder.spring.security.mongodb.payload.response.MessageResponse;
+import com.bezkoder.spring.security.mongodb.payload.response.RoleRequestedUser;
+import com.bezkoder.spring.security.mongodb.payload.response.TokenRefreshResponse;
+import com.bezkoder.spring.security.mongodb.payload.response.UserInfoResponse;
+import com.bezkoder.spring.security.mongodb.repository.RefreshTokenRepository;
 import com.bezkoder.spring.security.mongodb.repository.RoleRepository;
 import com.bezkoder.spring.security.mongodb.repository.UserRepository;
 import com.bezkoder.spring.security.mongodb.security.jwt.JwtUtils;
 import com.bezkoder.spring.security.mongodb.security.services.UserDetailsImpl;
+import com.bezkoder.spring.security.mongodb.service.RefreshTokenService;
+import com.bezkoder.spring.security.mongodb.service.UserService;
+import jakarta.validation.Valid;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 //for Angular Client (withCredentials)
 //@CrossOrigin(origins = "http://localhost:8081", maxAge = 3600, allowCredentials="true")
@@ -58,6 +59,12 @@ public class AuthController {
   @Autowired
   UserService userService;
 
+  @Autowired
+  RefreshTokenService refreshTokenService;
+
+  @Autowired
+  RefreshTokenRepository refreshTokenRepository;
+
   @PostMapping("/sign-in")
   public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginRequest loginRequest) {
 
@@ -68,19 +75,42 @@ public class AuthController {
 
     UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
 
-    String jwtCookie = jwtUtils.generateJwtCookie(userDetails);
+    String jwtCookie = jwtUtils.generateJwtToken(userDetails);
+    RefreshToken refreshToken = refreshTokenService.createRefreshToken(userDetails.getId());
 
     List<String> roles = userDetails.getAuthorities().stream()
-        .map(item -> item.getAuthority())
+        .map(GrantedAuthority::getAuthority)
         .collect(Collectors.toList());
 
-    return ResponseEntity.ok().header(HttpHeaders.SET_COOKIE, jwtCookie.toString())
-        .body(new UserInfoResponse(userDetails.getId(),
+    return ResponseEntity.ok()
+            .header(HttpHeaders.SET_COOKIE, jwtCookie)
+            .body(new UserInfoResponse(userDetails.getId(),
                                    userDetails.getUsername(),
                                    userDetails.getEmail(),
                                    roles,
-                                   jwtCookie
+                                   jwtCookie,
+                                   refreshToken.getToken()
                 ));
+  }
+
+  @PostMapping("/refresh-token")
+  public ResponseEntity<?> refreshToken(@RequestBody TokenRefreshRequest request) {
+    String requestRefreshToken = request.getRefreshToken();
+
+    return refreshTokenRepository.findByToken(requestRefreshToken)
+            .map(refreshToken -> refreshTokenService.verifyExpiration(refreshToken))
+            .map(RefreshToken::getUserId)
+            .map(userId -> {
+              String newAccessToken = jwtUtils.generateTokenFromUsername(userId);
+
+              return ResponseEntity.ok(
+                      TokenRefreshResponse.builder()
+                              .accessToken(newAccessToken)
+                              .refreshToken(requestRefreshToken)
+                              .build());
+
+            })
+            .orElseThrow(() -> new RuntimeException("Refresh token is not in database!"));
   }
 
   @PostMapping("/signup")
